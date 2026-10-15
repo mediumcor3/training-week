@@ -154,7 +154,6 @@ footer { font-size: 12px; color: var(--muted); text-align: center; }
 <div class="wrap">
   <header class="hero">
     <i class="bubble-deco b1"></i><i class="bubble-deco b2"></i><i class="bubble-deco b3"></i><i class="bubble-deco b4"></i>
-    <div class="eyebrow" id="program">Training log</div>
     <h1 id="headline">This week, <span class="squish">so far</span></h1>
     <p class="sub" id="dates">Loading your log…</p>
     <div class="weeks" id="weeks" role="group" aria-label="Pick a week"></div>
@@ -168,7 +167,6 @@ footer { font-size: 12px; color: var(--muted); text-align: center; }
     <div class="board-scroll"><div class="board" id="board"></div></div>
   </section>
   </details>
-  <footer id="foot"></footer>
 </div>
 
 <script>
@@ -462,7 +460,7 @@ function allSegs() {
 
 function render() {
   if (!LOG) return;
-  const { boards, program } = LOG;
+  const { boards } = LOG;
   const bi = SEL == null ? CUR : SEL, b = boards[bi];
   const todayKey = keyOf(new Date());
   const days = [...Array(boardLen(b))].map((_, k) => addDays(b.start, k));
@@ -470,7 +468,6 @@ function render() {
   const cols = days.map(dt => ({ date: dt, segs: segs.filter(sg => keyOf(sg.date) === keyOf(dt)) }));
   const mine = cols.flatMap(c => c.segs);
 
-  $("program").textContent = program || "Training log";
   const rel = bi === CUR ? "This week" : bi < CUR ? (CUR - bi === 1 ? "Last week" : `${CUR - bi} weeks ago`) : "Next week";
   $("headline").innerHTML = `${rel}: <span class="squish">Week ${b.n}</span>`;
   $("dates").textContent = `${fmtDate(days[0])} to ${fmtDate(days[days.length - 1])}`;
@@ -608,7 +605,6 @@ $("board").addEventListener("scroll", hidePop, { passive: true });
 
 load(b64ToText(SNAPSHOT_B64));
 setSource("", snapshotNote);
-$("foot").textContent = "Built from your Papayats sheet in Google Drive";
 
 // Live data from Google Drive
 (async () => {
