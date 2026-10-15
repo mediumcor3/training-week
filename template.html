@@ -1,4 +1,9 @@
 <title>Medium's Training Week</title>
+<meta name="description" content="What Medium has been training this week: runs, lifts and what's coming up.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Medium's Training Week">
+<meta property="og:description" content="What Medium has been training this week: runs, lifts and what's coming up.">
+<meta name="twitter:card" content="summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
 <style>
@@ -508,7 +513,7 @@ function load(text) {
   } catch (e) { console.error(e); return false; }
 }
 function setSource(kind, html) { $("source").innerHTML = `<span class="dot ${kind}"></span><span>${html}</span>`; }
-const snapshotNote = `Showing the snapshot from ${esc(SNAPSHOT_LABEL)}.`;
+const snapshotNote = `Updated ${esc(SNAPSHOT_LABEL)}.`;
 
 // History popover: hover, focus or tap an exercise or a day to see that slot in earlier weeks.
 const pop = document.createElement("div"); pop.id = "pop"; pop.hidden = true; pop.setAttribute("role", "tooltip"); document.body.appendChild(pop);
@@ -574,11 +579,15 @@ function historyHtml(el) {
     return `<h3>${esc(part || "Extra exercise")} · Bodybuilding ${day.bb.label}</h3>` + (rows || `<div class="dim">This is the first ${day.bb.label} session, so there's no history yet.</div>`);
   }
   const si = +el.dataset.s, k = +el.dataset.k, m = day.sessions[si][k];
+  // Same exercise by name: that day in earlier weeks first, else anywhere in that week.
   const rows = prior.map(pw => {
-    const pd = pw.days[di]; const pm = pd && pd.sessions[si] && pd.sessions[si][k];
-    return `<div class="wkrow"><span class="wklab">${pd ? slotLabel(pm && pm.date || pd.date) : `Week ${pw.n}`}</span>${moveLine(pm)}</div>`;
+    const pd = pw.days[di], same = x => x.moves.find(pm => norm(pm.name) === norm(m.name));
+    let hit = pd && same(pd) ? { d: pd, pm: same(pd) } : null;
+    if (!hit) { const od = pw.days.find(same); if (od) hit = { d: od, pm: same(od) }; }
+    if (!hit) return "";
+    return `<div class="wkrow"><span class="wklab">${slotLabel(hit.pm.date || hit.d.date)}</span>${moveLine(hit.pm)}</div>`;
   }).join("");
-  return `<h3>${esc(m.name)} in earlier weeks</h3>` + (rows || `<div class="dim">Week ${w.n} is the first week, so there's no history yet.</div>`);
+  return `<h3>${esc(m.name)} in earlier weeks</h3>` + (rows || `<div class="dim">No earlier ${esc(m.name)} in this log yet.</div>`);
 }
 function showPop(el) {
   if (!LOG) return;
