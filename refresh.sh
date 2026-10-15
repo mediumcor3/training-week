@@ -8,5 +8,6 @@ if cmp -s data/log.csv.new data/log.csv; then rm data/log.csv.new; echo "Sheet u
 mv data/log.csv.new data/log.csv
 python3 -I build.py data/log.csv "$(TZ=America/New_York date '+%b %-d, %-I:%M %p')" --standalone
 git add data/log.csv index.html
-git commit -qm "Refresh from training sheet"
+git commit -qm "Refresh from training sheet" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01V5FpRXvgC7q6QNrgvh66Zp"
 git push origin main
