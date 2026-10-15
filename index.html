@@ -157,12 +157,6 @@ section { display: grid; gap: 14px; }
 .beat b { color: var(--berry); font-weight: 800; }
 
 footer { font-size: 12px; color: var(--muted); text-align: center; }
-/* Phones: days stack top to bottom instead of scrolling sideways. */
-@media (max-width: 640px) {
-  .board-scroll { overflow-x: visible; scroll-snap-type: none; padding-bottom: 0; }
-  .board { grid-template-columns: 1fr !important; }
-  .day.rest, .day.planned:not(:has(.moves, .runs)) { padding: 10px 14px; }
-}
 @media (max-width: 480px) { .hero { border-radius: 28px; padding: 24px 18px; } .stat b { font-size: 28px; } }
 </style>
 
