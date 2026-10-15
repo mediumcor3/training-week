@@ -153,24 +153,13 @@ section { display: grid; gap: 14px; }
 .beat b { color: var(--berry); font-weight: 800; }
 
 footer { font-size: 12px; color: var(--muted); text-align: center; }
-/* Phones: a compact board, about four days across, so more of the week fits on screen. */
+/* Phones: the header keeps its size; the week buttons fit one row and the board is compact, about four days across. */
 @media (max-width: 600px) {
-  .wrap { gap: 16px; padding-inline: 10px; padding-block: 12px 32px; }
-  .hero { gap: 8px; }
-  h1 { font-size: 28px; }
-  .sub { font-size: 13px; }
-  .weeks { flex-wrap: nowrap; gap: 5px; }
-  .wk { font-size: 12px; padding: 4px 9px; white-space: nowrap; }
+  .weeks { flex-wrap: nowrap; gap: 6px; }
+  .wk { font-size: 13px; padding: 5px 10px; white-space: nowrap; }
   .wk small { font-size: 9px; margin-left: 2px; }
-  .source { font-size: 11px; }
-  .stats { gap: 8px; }
-  .stat { border-radius: 20px; padding: 10px 14px; gap: 16px; }
-  .stat-part + .stat-part { padding-left: 16px; }
-  .stat b { font-size: 22px !important; }
-  .stat span { font-size: 11px; }
-  h2 { font-size: 18px; }
   .board-scroll { padding-bottom: 8px; }
-  .board { grid-template-columns: none !important; grid-auto-flow: column; grid-auto-columns: calc((100vw - 20px - 15px) / 4); gap: 5px; }
+  .board { grid-template-columns: none !important; grid-auto-flow: column; grid-auto-columns: calc((100vw - 32px - 15px) / 4); gap: 5px; }
   .day { padding: 6px; gap: 6px; border-radius: 14px; }
   .day-head { grid-template-columns: 1fr; justify-items: start; gap: 2px; }
   .num { width: 30px; height: 30px; font-size: 13px; }
