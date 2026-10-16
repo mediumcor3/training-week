@@ -316,7 +316,12 @@ function parseLog(rows) {
       let curTag = null;
       for (let r = b.start; r < b.end; r++) {
         const tagCell = wcols.map(c => g(r, c).match(TAG_RE)).find(Boolean);
-        if (tagCell) {
+        // A tag written only in the run cell, partway through a day, dates just that run.
+        const runOnly = tagCell && (day.moves.length || day.runs.length) && C.cardio != null && TAG_RE.test(g(r, C.cardio)) &&
+          wcols.every(c => c === C.cardio || !TAG_RE.test(g(r, c)));
+        let runTag = null;
+        if (runOnly) runTag = { month: +tagCell[1], day: +tagCell[2] };
+        else if (tagCell) {
           curTag = { month: +tagCell[1], day: +tagCell[2] };
           if (!day.moves.length && !day.runs.length) day.tag = curTag;
           else if (day.moves.length >= 3 && !day.splitTag) day.splitTag = curTag; // e.g. bodybuilding done the next day
@@ -326,7 +331,7 @@ function parseLog(rows) {
         if (/^mileage$/i.test(cardio)) continue;
         for (const v of [cardio, mv]) {
           const rm = v.match(RUN_RE);
-          if (rm) day.runs.push({ miles: +rm[1], pace: rm[2], tag: curTag });
+          if (rm) day.runs.push({ miles: +rm[1], pace: rm[2], tag: runTag || curTag });
         }
         if (cardio && !RUN_RE.test(cardio)) {
           if (/^x$/i.test(cardio)) day.skippedCardio = true;
@@ -431,7 +436,11 @@ function daySegs(wi, i) {
   const weeks = LOG.weeks, prev = weeks[wi - 1], d = weeks[wi].days[i], date = d.date;
   const pd = prev && prev.days[i], out = [];
   const lifted = ss => ss && ss.some(m => m.logged) ? 1 : 0;
-  const runs = d.runs.map(r => `<span class="run">🏃 ${r.miles} mi${r.pace ? ` <em>@ ${esc(r.pace)}/mi</em>` : ""}</span>`);
+  const runChip = r => `<span class="run">🏃 ${r.miles} mi${r.pace ? ` <em>@ ${esc(r.pace)}/mi</em>` : ""}</span>`;
+  // A run tagged with its own date shows on that date.
+  const away = d.runs.filter(r => r.date && keyOf(r.date) !== keyOf(date)), here = d.runs.filter(r => !away.includes(r));
+  for (const r of away) out.push({ date: r.date, wi, i, d, done: true, rest: false, miles: r.miles, runs: 1, runList: [r], lifts: 0, moves: [], html: `<div class="runs">${runChip(r)}</div>` });
+  const runs = here.map(runChip);
   // Run-only days: show the planned run until one is logged.
   if (!d.runs.length && !d.moves.length && d.cardioPlan.some(p => /^run\b/i.test(p))) runs.push(`<span class="run plan">🏃 Run</span>`);
   const at = `data-wi="${wi}" data-day="${i}"`;
@@ -475,7 +484,7 @@ function daySegs(wi, i) {
     } else lifts += lifted(d.sessions[1]);
   }
   moves += bbMoves;
-  out.push({ date, wi, i, d, done: d.done, rest: d.rest, miles: d.runs.reduce((t, r) => t + r.miles, 0), runs: d.runs.length, lifts, moves: mainMoves,
+  out.push({ date, wi, i, d, done: d.done, rest: d.rest, miles: here.reduce((t, r) => t + r.miles, 0), runs: here.length, runList: here, lifts, moves: mainMoves,
     html: (runs.length ? `<div class="runs">${runs.join("")}</div>` : "") + (moves ? `<ul class="moves">${moves}</ul>` : "") });
   return out;
 }
@@ -582,7 +591,7 @@ function historyHtml(el) {
     const rows = LOG.boards.slice(0, bi).filter(bd => pos <= boardLen(bd)).map((bd, k) => {
       const dt = addDays(bd.start, pos - 1), on = segs.filter(sg => keyOf(sg.date) === keyOf(dt) && !sg.rest);
       const mi = on.reduce((t, sg) => t + sg.miles, 0), lifts = on.reduce((t, sg) => t + sg.lifts, 0);
-      const runs = on.flatMap(sg => sg.runs ? sg.d.runs : []);
+      const runs = on.flatMap(sg => sg.runList || []);
       const bits = [lifts ? `${lifts} ${lifts === 1 ? "lift" : "lifts"}` : "", mi ? `${+mi.toFixed(2)} mi${runs.length === 1 && runs[0].pace ? ` @ ${esc(runs[0].pace)}` : ""}` : ""].filter(Boolean);
       const list = on.flatMap(sg => sg.moves).filter(m => m.logged).map(m => `<li><b>${esc(m.name)}</b> <span class="val">${esc(m.weights || m.sets)}</span></li>`).join("");
       return `<div class="wkrow"><span class="wklab">Week ${bd.n} · ${DAY_NAMES[(dt.getDay() + 6) % 7]} ${fmtDate(dt)}</span><div>${bits.length ? bits.join(" · ") : `<span class="dim">Rest</span>`}</div>${list ? `<ul>${list}</ul>` : ""}</div>`;
