@@ -476,7 +476,11 @@ function daySegs(wi, i) {
   for (const r of away) out.push({ date: r.date, wi, i, d, done: true, rest: false, miles: r.miles, runs: 1, runList: [r], lifts: 0, moves: [], html: `<div class="runs">${runChip(r)}</div>` });
   const runs = here.map(runChip);
   // Run-only days: show the planned run until one is logged.
-  if (!d.runs.length && !d.moves.length && d.cardioPlan.some(p => /^run\b/i.test(p))) runs.push(`<span class="run plan">🏃 Run</span>`);
+  // Lifting days with "Run (opt. easy)" in the sheet show an optional run until the day has passed.
+  const optRun = d.cardioPlan.some(p => /^run\b.*opt/i.test(p));
+  if (!d.runs.length && !d.moves.length && d.cardioPlan.some(p => /^run\b/i.test(p)))
+    runs.push(`<span class="run plan">🏃 ${optRun ? "Optional run" : "Run"}</span>`);
+  else if (!here.length && d.moves.length && optRun && keyOf(date) >= keyOf(new Date())) runs.push(`<span class="run plan">🏃 Optional run</span>`);
   const at = `data-wi="${wi}" data-day="${i}"`;
   const moveHtml = (m, si, k, part) => {
     const last = part != null ? null : pd && pd.moves.find(x => norm(x.name) === norm(m.name) && x.logged);
