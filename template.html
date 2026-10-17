@@ -211,11 +211,14 @@ const DRIVE = { server: "Google Drive", tool: "download_file_content", input: { 
 // Date tags in the sheet: "@10/14" in any cell of a day's rows (that week's columns) dates that row and everything below it in the day.
 const TAG_RE = /@\s*(\d{1,2})\/(\d{1,2})/;
 // Real dates Elvis told Claude that the sheet doesn't tag. A tag in the sheet always wins.
-const KNOWN_DATES = [ // Block 1
+const KNOWN_DATES = [ // block defaults to 1
   // Week 4: rest Oct 10–11, then Day 4 Oct 12, Day 5 run Oct 13, Day 6 power Oct 14, bodybuilding B3 Oct 15.
   { week: 4, day: 4, date: "10/12" },
   { week: 4, day: 5, date: "10/13" },
   { week: 4, day: 6, date: "10/14", bodybuilding: "10/15" },
+  // Block 2 started Sat Oct 17 (Oct 16 belongs to no week); Week 1 dropped its rest day to fit, so it is 6 days.
+  { block: 2, week: 1, day: 1, date: "10/17" },
+  { block: 2, week: 1, dropRest: true },
 ];
 const parseMD = s => { const [m, d] = s.split("/").map(Number); return { month: m, day: d }; };
 // Bodybuilding (2nd session on Days 2/4/6). Elvis's fixed body-part order; sessions alternate A, B, A, B across days and weeks.
@@ -362,7 +365,7 @@ function parseLog(rows) {
       // "Power + DC" days are two gym sessions: the power block (first 3 movements), then the DC block.
       day.isBB = /\bdc\b/i.test(focus);
       day.sessions = day.isBB && day.moves.length > 3 ? [day.moves.slice(0, 3), day.moves.slice(3)] : (day.moves.length ? [day.moves] : []);
-      const known = block === 1 && KNOWN_DATES.find(k => k.week === w.n && k.day === b.n);
+      const known = KNOWN_DATES.find(k => (k.block || 1) === block && k.week === w.n && k.day === b.n);
       if (known) {
         if (known.date && !day.tag) { day.tag = parseMD(known.date); [...day.moves, ...day.runs].forEach(x => { if (!x.tag) x.tag = day.tag; }); }
         if (known.bodybuilding && !day.splitTag) {
@@ -372,6 +375,10 @@ function parseLog(rows) {
       }
       w.days.push(day);
     }
+  }
+  // A week that dropped its rest day: the rest day leaves the week and the week is one day shorter.
+  for (const w of weeks) if (KNOWN_DATES.some(k => (k.block || 1) === block && k.week === w.n && k.dropRest)) {
+    const before = w.days.length; w.days = w.days.filter(d => !d.rest); w.len = 7 - (before - w.days.length);
   }
   return { program, block, weeks };
 }
@@ -438,7 +445,7 @@ function buildBoards(weeks) {
     let start = last ? addDays(last.end, 1) : day1Of(w.n);
     // A new block starts on its Day 1 date (a "@date" tag on Day 1), never before the last block ends.
     if (last && last.block !== w.block && w.days[0] && keyOf(w.days[0].date) > keyOf(start)) start = new Date(w.days[0].date.getFullYear(), w.days[0].date.getMonth(), w.days[0].date.getDate());
-    let end = addDays(start, 6);
+    let end = addDays(start, (w.len || 7) - 1);
     for (const d of w.days) if (!d.rest) for (const x of [d.date, d.splitDate, ...d.moves.map(m => m.date), ...d.runs.map(r => r.date)]) if (x && keyOf(x) > keyOf(end)) end = x;
     boards.push({ n: w.n, block: w.block, start, end: new Date(end.getFullYear(), end.getMonth(), end.getDate()) });
   }
