@@ -216,9 +216,9 @@ const KNOWN_DATES = [ // block defaults to 1
   { week: 4, day: 4, date: "10/12" },
   { week: 4, day: 5, date: "10/13" },
   { week: 4, day: 6, date: "10/14", bodybuilding: "10/15" },
-  // Block 2 started Sat Oct 17 (Oct 16 belongs to no week); Week 1 dropped its rest day to fit, so it is 6 days.
+  // Block 2 Week 1 began Fri Oct 16, but Day 1 was missed and done Sat Oct 17; the week dropped its rest day to stay 7 days.
   { block: 2, week: 1, day: 1, date: "10/17" },
-  { block: 2, week: 1, dropRest: true },
+  { block: 2, week: 1, start: "10/16", dropRest: true },
 ];
 const parseMD = s => { const [m, d] = s.split("/").map(Number); return { month: m, day: d }; };
 // Bodybuilding (2nd session on Days 2/4/6). Elvis's fixed body-part order; sessions alternate A, B, A, B across days and weeks.
@@ -378,8 +378,9 @@ function parseLog(rows) {
   }
   // A week that dropped its rest day: the rest day leaves the week and the week is one day shorter.
   for (const w of weeks) if (KNOWN_DATES.some(k => (k.block || 1) === block && k.week === w.n && k.dropRest)) {
-    const before = w.days.length; w.days = w.days.filter(d => !d.rest); w.len = 7 - (before - w.days.length);
+    w.days = w.days.filter(d => !d.rest);
   }
+  for (const w of weeks) { const k = KNOWN_DATES.find(k => (k.block || 1) === block && k.week === w.n && k.start); if (k) w.startTag = parseMD(k.start); }
   return { program, block, weeks };
 }
 // The live tab plus every finished block before it, as one run of weeks so history and "To beat" carry across blocks.
@@ -444,8 +445,9 @@ function buildBoards(weeks) {
     const last = boards[boards.length - 1];
     let start = last ? addDays(last.end, 1) : day1Of(w.n);
     // A new block starts on its Day 1 date (a "@date" tag on Day 1), never before the last block ends.
-    if (last && last.block !== w.block && w.days[0] && keyOf(w.days[0].date) > keyOf(start)) start = new Date(w.days[0].date.getFullYear(), w.days[0].date.getMonth(), w.days[0].date.getDate());
-    let end = addDays(start, (w.len || 7) - 1);
+    if (w.startTag) start = resolveTag(w.startTag, start);
+    else if (last && last.block !== w.block && w.days[0] && keyOf(w.days[0].date) > keyOf(start)) start = new Date(w.days[0].date.getFullYear(), w.days[0].date.getMonth(), w.days[0].date.getDate());
+    let end = addDays(start, 6);
     for (const d of w.days) if (!d.rest) for (const x of [d.date, d.splitDate, ...d.moves.map(m => m.date), ...d.runs.map(r => r.date)]) if (x && keyOf(x) > keyOf(end)) end = x;
     boards.push({ n: w.n, block: w.block, start, end: new Date(end.getFullYear(), end.getMonth(), end.getDate()) });
   }
