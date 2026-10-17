@@ -219,6 +219,14 @@ const KNOWN_DATES = [ // block defaults to 1
   // Block 2 Week 1 starts Sat Oct 17 (Oct 16 belongs to no week); Day 7, the rest day, is Fri Oct 23.
   { block: 2, week: 1, day: 1, date: "10/17" },
 ];
+// Run prescriptions Elvis set in the project (not in the sheet), by block, week and sheet day. A logged run replaces it; text null hides the sheet's run plan.
+const RUN_PLANS = [
+  { block: 2, week: 1, day: 1, text: "3 mi + 4 strides" },
+  { block: 2, week: 1, day: 2, text: null },
+  { block: 2, week: 1, day: 3, text: "5 mi long run" },
+  { block: 2, week: 1, day: 5, text: "4 mi + 4 strides" },
+  { block: 2, week: 1, day: 6, text: "4 mi" },
+];
 const parseMD = s => { const [m, d] = s.split("/").map(Number); return { month: m, day: d }; };
 // Bodybuilding (2nd session on Days 2/4/6). Elvis's fixed body-part order; sessions alternate A, B, A, B across days and weeks.
 const BB_ORDER = {
@@ -478,7 +486,9 @@ function daySegs(wi, i) {
   // Run-only days: show the planned run until one is logged.
   // Lifting days with "Run (opt. easy)" in the sheet show an optional run until the day has passed.
   const optRun = d.cardioPlan.some(p => /^run\b.*opt/i.test(p));
-  if (!d.runs.length && !d.moves.length && d.cardioPlan.some(p => /^run\b/i.test(p)))
+  const rx = RUN_PLANS.find(p => p.block === weeks[wi].block && p.week === weeks[wi].n && p.day === d.n);
+  if (rx) { if (rx.text && !here.length && keyOf(date) >= keyOf(new Date())) runs.push(`<span class="run plan">🏃 ${esc(rx.text)}</span>`); }
+  else if (!d.runs.length && !d.moves.length && d.cardioPlan.some(p => /^run\b/i.test(p)))
     runs.push(`<span class="run plan">🏃 ${optRun ? "Optional run" : "Run"}</span>`);
   else if (!here.length && d.moves.length && optRun && keyOf(date) >= keyOf(new Date())) runs.push(`<span class="run plan">🏃 Optional run</span>`);
   const at = `data-wi="${wi}" data-day="${i}"`;
