@@ -216,9 +216,8 @@ const KNOWN_DATES = [ // block defaults to 1
   { week: 4, day: 4, date: "10/12" },
   { week: 4, day: 5, date: "10/13" },
   { week: 4, day: 6, date: "10/14", bodybuilding: "10/15" },
-  // Block 2 Week 1 began Fri Oct 16, but Day 1 was missed and done Sat Oct 17; the week dropped its rest day to stay 7 days.
+  // Block 2 Week 1 starts Sat Oct 17 (Oct 16 belongs to no week); Day 7, the rest day, is Fri Oct 23.
   { block: 2, week: 1, day: 1, date: "10/17" },
-  { block: 2, week: 1, start: "10/16", dropRest: true },
 ];
 const parseMD = s => { const [m, d] = s.split("/").map(Number); return { month: m, day: d }; };
 // Bodybuilding (2nd session on Days 2/4/6). Elvis's fixed body-part order; sessions alternate A, B, A, B across days and weeks.
