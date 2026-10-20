@@ -309,7 +309,7 @@ function parseLog(rows) {
     const m = h.match(/week\s*(\d+)/i);
     if (m) { cur = { n: +m[1], block, cols: {}, days: [] }; weeks.push(cur); }
     if (!cur || c === 0) return;
-    const role = /cardio/i.test(h) ? "cardio" : /movement notes/i.test(h) ? "mnotes" : /movement/i.test(h) ? "move"
+    const role = /cardio|^run$/i.test(h.trim()) ? "cardio" : /movement notes/i.test(h) ? "mnotes" : /movement/i.test(h) ? "move"
       : /sets/i.test(h) ? "sets" : /prescribed|rpe|%/i.test(h) ? "rx" : /weight/i.test(h) ? "weights"
       : /notes/i.test(h) ? (cur.cols.sets == null ? "mnotes" : "notes") : null;
     if (role && cur.cols[role] == null) cur.cols[role] = c;
