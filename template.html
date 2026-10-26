@@ -218,6 +218,8 @@ const KNOWN_DATES = [ // block defaults to 1
   { week: 4, day: 6, date: "10/14", bodybuilding: "10/15" },
   // Block 2 Week 1 starts Sat Oct 17 (Oct 16 belongs to no week); Day 7, the rest day, is Fri Oct 23.
   { block: 2, week: 1, day: 1, date: "10/17" },
+  // Block 2 Week 2 starts Sun Oct 25: Elvis rested Sat Oct 24, which becomes Week 1 Day 8.
+  { block: 2, week: 2, day: 1, date: "10/25", start: "10/25" },
 ];
 // Run prescriptions Elvis set in the project (not in the sheet), by block, week and sheet day. A logged run replaces it; text null hides the sheet's run plan.
 const RUN_PLANS = [
@@ -452,7 +454,11 @@ function buildBoards(weeks) {
     const last = boards[boards.length - 1];
     let start = last ? addDays(last.end, 1) : day1Of(w.n);
     // A new block starts on its Day 1 date (a "@date" tag on Day 1), never before the last block ends.
-    if (w.startTag) start = resolveTag(w.startTag, start);
+    if (w.startTag) {
+      start = resolveTag(w.startTag, start);
+      // A rest day taken before a week's Day 1 in the same block stays in the previous week as an extra day (Day 8).
+      if (last && last.block === w.block && keyOf(start) > keyOf(addDays(last.end, 1))) last.end = addDays(start, -1);
+    }
     else if (last && last.block !== w.block && w.days[0] && keyOf(w.days[0].date) > keyOf(start)) start = new Date(w.days[0].date.getFullYear(), w.days[0].date.getMonth(), w.days[0].date.getDate());
     let end = addDays(start, 6);
     for (const d of w.days) if (!d.rest) for (const x of [d.date, d.splitDate, ...d.moves.map(m => m.date), ...d.runs.map(r => r.date)]) if (x && keyOf(x) > keyOf(end)) end = x;
